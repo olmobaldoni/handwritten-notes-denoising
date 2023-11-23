@@ -1,76 +1,110 @@
-L'algoritmo implementato è un motore di ricerca per il retrieval di immagini basato su contenuto (CBIR) che utilizza feature R-MAC (Regional Maximum Activation of Convolutions).
+# CBIR for Handwritten Notes
 
-Il funzionamento in generale è il seguente:
+Content-Based Image Retrieval (CBIR) system for handwritten notes using convolutional neural networks (CNNs) with Regional Maximum Activation of Convolution (RMAC) vector descriptors. The CBIR system aims to simplify the denoising process by retrieving similar handwritten notes based on visual features, focusing on variations in the grid patterns of the paper as defining categories. In this context, different backbones are explored and employed for effective comparison.
 
-1. Viene caricato un modello CNN pre-addestrato (VGG16 o VGG19) e rimosso lo strato di classificazione finale in modo da ottenere un estrattore di feature.
+## Datasets for Image Retrieval
 
-2. Per ogni immagine nel database viene calcolato il vettore di feature R-MAC ed salvato in una matrice db_feature_mat.
+We evaluated the RMAC-based retrieval system on three distinct datasets constructed using
+different methods: raw unprocessed scanned images of notes from various subjects and synthetic
+images generated for UNet network training.
+- **Dataset 1** ("db_0") consists of 120 unprocessed note images, with 20 images per class,
+from six different subjects.
+- **Dataset 2** ("db_1") comprises 120 images, including 60 without gridlines and 60 artificially
+generated images. These generated images are similar to the ones used for training the
+UNet network in image denoising. There are no associations between the images across
+the two classes.
+- **Dataset 3** ("db_2") includes 200 images, with 20 images without gridlines and 180 images
+generated from the previous set using nine different grid styles. These generated grid
+images are of the same type as the ones used for training the UNet network in image
+denoising. There are associations between the non-grid and generated grid images across
+the ten classes, with 20 images per class.
 
-3. Per una immagine di query, si calcola il suo vettore R-MAC feature_vec. 
+## Image Retrieval Pipeline
 
-4. Si calcola la similarità tra feature_vec e ogni vettore in db_feature_mat usando il coseno della distanza.
+![CBIR Pipeline](./assets/CBIR_architecture.png)
 
-5. Si ritornano le immagini del database con i punteggi di similarità più alti.
+1. Given a query image, it is first preprocessed and converted into a tensor.
+2. The query image tensor is passed through the pre-trained CNN feature extractor to obtain
+the convolutional activation maps.
+3. Regional maximum activation of convolutions (R-MAC) is applied on the activation maps
+to obtain a regional feature vector for each image region at multiple scales.
+4. The regional feature vectors are l2-normalized, summed and l2-normalized again to obtain
+a single global image descriptor vector.
+5. The query descriptor is compared against the precomputed database descriptors using
+cosine similarity to retrieve the top k most similar images.
 
+## Experiments and Results
 
-Entrando nel dettaglio della funzione rmac():
+The experiments evaluated multiple backbone architectures, including VGG16, VGG19, DenseNet, UNet trained on image denoising, and three UNet models with Kaiming initialization and random weights. The experiments were conducted with a 40% overlap ratio and 6 sampling scales. Each image served as a query for the CBIR system, and the Average Precision (AP) was computed for each query image. The mean Average Precision (mAP) was calculated across all query images for each backbone architecture on the respective dataset. The mAP@K values for K = 3, 5, 10, and 20 were reported to provide a comprehensive view of the system's performance in different top-K retrievals. The results for each backbone architecture on various datasets are presented in the following section.
 
-- Prende in input un tensore x di shape (N, C, W, H) corrispondente alla mappa di attivazione dell'ultimo strato convoluzionale.
+- ### mAP on db\_0
 
-- Viene calcolata la dimensione della finestra w come minimo tra larghezza W e altezza H.
+| Model         | k = 3  | k = 5  | k = 10 | k = 20 |
+|---------------|--------|--------|--------|--------|
+| VGG16         | 0.997  | 0.997  | 0.993  | 0.951  |
+| VGG19         | 0.997  | 0.998  | 0.994  | 0.930  |
+| DenseNet      | 1.000  | 1.000  | 0.998  | 0.923  |
+| Trained UNet  | 0.983  | 0.975  | 0.864  | 0.680  |
+| Kaiming UNet 0| 1.000  | 0.995  | 0.989  | 0.923  |
+| Kaiming UNet 1| 1.000  | 1.000  | 0.998  | 0.945  |
+| Kaiming UNet 2| 1.000  | 0.998  | 0.996  | 0.935  |
 
-- Per ogni livello di scala l (da min_scale_level a max_scale_level):
+- ### mAP on db\_1
 
-  - Si calcola la dimensione della finestra al livello l come w/(l+1)
+| Model         | k = 3  | k = 5  | k = 10 | k = 20 |
+|---------------|--------|--------|--------|--------|
+| VGG16         | 0.972  | 0.955  | 0.927  | 0.894  |
+| VGG19         | 0.950  | 0.937  | 0.905  | 0.876  |
+| DenseNet      | 0.972  | 0.958  | 0.932  | 0.894  |
+| Trained UNet  | 0.908  | 0.858  | 0.806  | 0.758  |
+| Kaiming UNet 0| 0.939  | 0.903  | 0.854  | 0.768  |
+| Kaiming UNet 1| 0.939  | 0.912  | 0.864  | 0.785  |
+| Kaiming UNet 2| 0.906  | 0.868  | 0.837  | 0.740  |
 
-  - Si calcola la stride della finestra per avere una sovrapposizione del 40% tra le finestre.
+- ### mAP on db\_2
 
-  - Si applica il pooling (max o avg) con kernel size e stride appena calcolati.
+| Model         | k = 3  | k = 5  | k = 10 | k = 20 |
+|---------------|--------|--------|--------|--------|
+| VGG16         | 0.675  | 0.636  | 0.604  | 0.548  |
+| VGG19         | 0.717  | 0.711  | 0.674  | 0.594  |
+| DenseNet      | 0.730  | 0.724  | 0.677  | 0.613  |
+| Trained UNet  | 0.467  | 0.360  | 0.317  | 0.302  |
+| Kaiming UNet 0| 0.467  | 0.360  | 0.354  | 0.348  |
+| Kaiming UNet 1| 0.467  | 0.370  | 0.371  | 0.375  |
+| Kaiming UNet 2| 0.467  | 0.360  | 0.347  | 0.336  |
 
-  - Dal risultato si ricavano le coordinate ijhw di ogni finestra a quel livello di scala.
-
-  - Il risultato del pooling viene appiattito in un vettore ed inserito in una lista feature_vec.
-
-- feature_vec contiene i vettori di tutti i livelli di scala concatenati. 
-
-- Viene fatta la L2 normalization di feature_vec.
-
-- Viene ritornato il vettore R-MAC feature_vec e le coordinate delle finestre regions_ijhw.
-
-In questo modo l'operazione di R-MAC pooling permette di ottenere un vettore descrittore che aggrega informazioni locali e globali dell'immagine a diversi livelli di scala. Questo vettore può essere usato per confrontare immagini in maniera efficace per il retrieval.
-
-
-
-> COMPUTE_BB_MAT()
-
-
-Questa funzione serve a localizzare oggetti simili all'interno di un'immagine del database rispetto ad una patch di query contenente un singolo oggetto.
-
-Il flusso di alto livello è:
-
-1. Per ogni patch della query:
-    - Estrai le feature regionali dell'intera immagine del database con i relativi bounding box associati (metodo get_im_feature_by_path)
-
-    - Estrai un vettore di feature aggregato dalla patch di query (metodo compute_im_feature con MAC pooling)
-
-    - Calcola la similarità tra ogni feature regionale dell'immagine e la feature della patch tramite prodotto scalare (matrice di similarità)
-
-2. Applica una maschera alla matrice di similarità per sopprimere i punteggi elevati dei BB più grandi. L'idea è che BB grandi coprono porzioni significative dell'immagine e probabilmente contengono oggetti diversi, quindi non vogliamo recuperarli.
-
-3. Trova l'indice del BB con similarità mascherata massima, che dovrebbe corrispondere alla posizione dell'oggetto simile nell'immagine di database.
-
-4. Aggiunge questo BB alla lista da ritornare come risultato.
-
-Quindi in sintesi, confronta le feature della patch contenente un singolo oggetto con tutte le regioni dell'immagine del database per trovare il BB che meglio localizza l'oggetto simile all'interno dell'immagine. La maschera sui BB grandi aiuta ad affinare la localizzazione.
-
-
-#### Parametri sui quali posso agire:
-- ovr = overlap ratio
-- max scale lavel
-- area tolerance
+- Overall, the pretrained CNNs (VGG16, VGG19, DenseNet) consistently achieve the best performance on all three datasets, due to their ability to extract powerful
+- The UNet trained for the denoising task performs the worst as it overfits to that task and cannot generalize well for the retrieval task.
 
 
-### Confronti che posso fare:
-- VGG16 vs VGG19 vs U-Net
-devo ricordarmi di dire che vgg lavora con immagini a 3 canali in ingresso, quindi quello che ho fatto è stato aprire le immagini con convert('RGB'). In questo modo il canale viene replicato 3 volte identico a se stesso
-- Quando utilizzo Unet invece, il modello che abbiamo è stato addestrato indicando che in input ci devono essere immagini a singolo canale, quindi le apro con convert('L')
+## Install Dependencies
+
+```console
+handwritten-notes-denoising/retrieval pip install -r requirements.txt
+```
+
+## Download Datasets
+
+Once the dataset is downloaded, add the `data` folder to the respective `db` folder in the cloned repository
+
+- [db_0](https://archive.org/compress/db_0_20231123/formats=ITEM%20TILE,JPEG,ARCHIVE%20BITTORRENT,METADATA)
+- [db_1](https://archive.org/compress/db_1_20231123/formats=ITEM%20TILE,PNG,ARCHIVE%20BITTORRENT,METADATA)
+- [db_2](https://archive.org/compress/db_2_20231123/formats=ITEM%20TILE,PNG,ARCHIVE%20BITTORRENT,METADATA)
+
+## Run
+
+- **Demo retrieve images:** Run jupyter notebook
+
+- **mAP evaluation:** Run python script
+```console
+handwritten-notes-denoising/retrieval python eval_db_<>.py
+```
+
+
+## References
+
+[1] Konstantin Schall, Kai Uwe Barthel, Nico Hezel, Klaus Jung. *GPR1200: A Benchmark for General-Purpose Content-Based Image Retrieval*. [arXiv:2111.13122](https://arxiv.org/abs/2111.13122)
+
+[2] Giorgos Tolias, Ronan Sicre, Hervé Jégou. *Particular object retrieval with integral max-pooling of CNN activations*. [arXiv:1511.05879](https://arxiv.org/abs/1511.05879)
+
+[3] Yang Li, Yulong Xu, Jiabao Wang, Zhuang Miao, Yafei Zhang. *MS-RMAC: Multiscale Regional Maximum Activation of Convolutions for Image Retrieval*. IEEE Signal Processing Letters, Vol. PP, pp. 1-1, Feb 2017. [DOI: 10.1109/LSP.2017.2665522](https://doi.org/10.1109/LSP.2017.2665522)

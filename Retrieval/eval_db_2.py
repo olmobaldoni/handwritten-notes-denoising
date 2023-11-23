@@ -1,12 +1,10 @@
-from PIL import Image
 from tabulate import tabulate
 from rmac import SearchEngine
 from evaluation import compute_mAP
 from tqdm import tqdm
 
 db_path = "db_2/data"
-# model_list = ["vgg16", "vgg19", "densenet", "trained_unet", "kaiming_unet_0", "kaiming_unet_1", "kaiming_unet_2"]
-model_list = ["kaiming_unet_1", "kaiming_unet_2"]
+model_list = ["vgg16", "vgg19", "densenet", "trained_unet", "kaiming_unet_0", "kaiming_unet_1", "kaiming_unet_2"]
 k_thresholds = [3, 5, 10, 20]
 
 for model in tqdm(model_list):
