@@ -37,7 +37,7 @@ cosine similarity to retrieve the top k most similar images.
 
 The experiments evaluated multiple backbone architectures, including VGG16, VGG19, DenseNet, UNet trained on image denoising, and three UNet models with Kaiming initialization and random weights. The experiments were conducted with a 40% overlap ratio and 6 sampling scales. Each image served as a query for the CBIR system, and the Average Precision (AP) was computed for each query image. The mean Average Precision (mAP) was calculated across all query images for each backbone architecture on the respective dataset. The mAP@K values for K = 3, 5, 10, and 20 were reported to provide a comprehensive view of the system's performance in different top-K retrievals. The results for each backbone architecture on various datasets are presented in the following section.
 
-- ## mAP on db\_0
+- **mAP on db\_0**
 
 | Model         | k = 3  | k = 5  | k = 10 | k = 20 |
 |---------------|--------|--------|--------|--------|
@@ -49,7 +49,7 @@ The experiments evaluated multiple backbone architectures, including VGG16, VGG1
 | Kaiming UNet 1| 1.000  | 1.000  | 0.998  | 0.945  |
 | Kaiming UNet 2| 1.000  | 0.998  | 0.996  | 0.935  |
 
-- ## mAP on db\_1
+- **mAP on db\_1**
 
 | Model         | k = 3  | k = 5  | k = 10 | k = 20 |
 |---------------|--------|--------|--------|--------|
@@ -61,7 +61,7 @@ The experiments evaluated multiple backbone architectures, including VGG16, VGG1
 | Kaiming UNet 1| 0.939  | 0.912  | 0.864  | 0.785  |
 | Kaiming UNet 2| 0.906  | 0.868  | 0.837  | 0.740  |
 
-- ## mAP on db\_2
+- **mAP on db\_2**
 
 | Model         | k = 3  | k = 5  | k = 10 | k = 20 |
 |---------------|--------|--------|--------|--------|
