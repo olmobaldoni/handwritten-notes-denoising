@@ -1,6 +1,0 @@
-*.pth
-*.sh
-
-db_0/data/*
-db_1/data/*
-db_2/data/*
