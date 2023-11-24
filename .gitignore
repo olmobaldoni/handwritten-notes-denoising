@@ -5,3 +5,6 @@
 retrieval/db_0/data/*
 retrieval/db_1/data/*
 retrieval/db_2/data/*
+
+UNET/*.sbatch
+UNET/*.sh
